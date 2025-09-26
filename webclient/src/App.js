@@ -75,7 +75,6 @@ function AuthForm({ isLogin, setToken, setMessage, navigate }) {
     );
 }
 
-// --- COMPONENT BỌC ROUTER CHÍNH ---
 function AppContent() {
     const [token, setToken] = useState(localStorage.getItem('jwt_token'));
     const [message, setMessage] = useState('');
