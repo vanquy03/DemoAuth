@@ -57,7 +57,7 @@ namespace WebServer.Controllers
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Email);
+            var user = await _userManager.FindByNameAsync(model.UserName);
             
             if (user == null)
             {
@@ -70,7 +70,7 @@ namespace WebServer.Controllers
             {
                 //Get token
                 var token = GenerateJwtToken(user);
-
+                
                 return Ok(new { Token = token });
             }
             return Unauthorized(new { Message = "Invalid credentials" });
