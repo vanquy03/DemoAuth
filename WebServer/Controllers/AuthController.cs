@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace WebServer.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controlleression]")]
     public class AuthController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
