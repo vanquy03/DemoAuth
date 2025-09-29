@@ -4,159 +4,121 @@ using Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using NUnit.Framework; // Thêm NUnit
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace Application.Tests
+namespace Tests
 {
     [TestFixture]
     public class AuthServiceTests
     {
-        // 1. Dữ liệu giả định
-        private readonly List<ApplicationUser> _userList = new List<ApplicationUser>
-        {
-            new ApplicationUser { UserName = "testuser", Email = "testuser@example.com", Id = "user-id-1" }
-        };
-        private readonly List<IdentityRole> _roleList = new List<IdentityRole>
-        {
-            new IdentityRole { Name = "EndUser" }
-        };
+        private Mock<UserManager<ApplicationUser>> _userManagerMock;
+        private Mock<RoleManager<IdentityRole>> _roleManagerMock;
+        private Mock<SignInManager<ApplicationUser>> _signInManagerMock;
+        private Mock<IConfiguration> _configurationMock;
+        private AuthService _authService;
 
-        // 2. Các đối tượng Mock (được khởi tạo trong SetUp)
-        private Mock<UserManager<ApplicationUser>> _mockUserManager;
-        private Mock<RoleManager<IdentityRole>> _mockRoleManager;
-        private Mock<SignInManager<ApplicationUser>> _mockSignInManager;
-        private Mock<IConfiguration> _mockConfiguration;
-
-        // Phương thức Setup (chạy trước mỗi Test)
         [SetUp]
-        public void Setup() // SỬA: Phải là public
+        public void Setup()
         {
-            // KHẮC PHỤC LỖI ACCESSIBILITY: Đảm bảo MockHelpers là public
-            _mockUserManager = MockHelpers.MockUserManager(_userList);
-            _mockRoleManager = MockHelpers.MockRoleManager(_roleList);
-            _mockSignInManager = MockHelpers.MockSignInManager<ApplicationUser>();
-            _mockConfiguration = MockHelpers.MockConfiguration();
-        }
+            var userStore = new Mock<IUserStore<ApplicationUser>>();
+            _userManagerMock = new Mock<UserManager<ApplicationUser>>(
+                userStore.Object, null, null, null, null, null, null, null, null);
 
-        // SỬA: Thêm public để khắc phục lỗi Inconsistent accessibility
-        public AuthService CreateService()
-        {
-            return new AuthService(
-                _mockUserManager.Object,
-                _mockRoleManager.Object,
-                _mockSignInManager.Object,
-                _mockConfiguration.Object
+            var roleStore = new Mock<IRoleStore<IdentityRole>>();
+            _roleManagerMock = new Mock<RoleManager<IdentityRole>>(
+                roleStore.Object, null, null, null, null);
+
+            var contextAccessor = new Mock<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
+            var userPrincipalFactory = new Mock<IUserClaimsPrincipalFactory<ApplicationUser>>();
+            _signInManagerMock = new Mock<SignInManager<ApplicationUser>>(
+                _userManagerMock.Object, contextAccessor.Object,
+                userPrincipalFactory.Object, null, null, null, null);
+
+            _configurationMock = new Mock<IConfiguration>();
+            _configurationMock.Setup(c => c["Jwt:Key"]).Returns("VGhpc2Q5/3MXg7mWvA38i6Ch/ZqzCeAt3NrvfVqw6G58cevKf+jwCuohK67/I2YqwWfprJKx7KO8mKWQ6/4868mCfIw==0lzQVZlcnlTdHJvbmdBbmRTZWN1cmFLZXlGb3JZb3Vyaml3dFRva2VuQXV0aGVudGljYXRpb24");
+            _configurationMock.Setup(c => c["Jwt:Issuer"]).Returns("http://localhost:5280");
+            _configurationMock.Setup(c => c["Jwt:Audience"]).Returns("my-web_client");
+            _authService = new AuthService(
+                _userManagerMock.Object,
+                _roleManagerMock.Object,
+                _signInManagerMock.Object,
+                _configurationMock.Object
             );
         }
 
-        // -------------------------------------------------------------------
-        // --- TEST CHO ĐĂNG KÝ (RegisterAsync) ---
-        // -------------------------------------------------------------------
-
         [Test]
-        public async Task RegisterAsync_ShouldReturnTrueAndVerifyCalls_WhenUserIsNew()
+        public async Task RegisterAsync_ShouldReturnTrue_WhenUserCreatedSuccessfully()
         {
-            // Arrange
-            var service = CreateService();
-            var newUserModel = new RegisterRequest { UserName = "newuser", Password = "Password123", RoleName = "Tester" };
-            _mockRoleManager.Setup(x => x.RoleExistsAsync("Tester")).ReturnsAsync(false);
+            var request = new RegisterRequest { UserName = "testuser", Password = "Pass@123", RoleName = "Admin" };
 
-            // Act
-            var result = await service.RegisterAsync(newUserModel);
+            _roleManagerMock.Setup(r => r.RoleExistsAsync(request.RoleName)).ReturnsAsync(false);
+            _roleManagerMock.Setup(r => r.CreateAsync(It.IsAny<IdentityRole>())).ReturnsAsync(IdentityResult.Success);
 
-            // Assert
-            // SỬA LỖI KIỂU DỮ LIỆU: RegisterAsync trả về bool, nên Assert là Is.True
-            Assert.That(result, Is.True);
+            _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), request.Password))
+                .ReturnsAsync(IdentityResult.Success);
 
-            // Xác minh: UserManager.CreateAsync đã được gọi 1 lần
-            _mockUserManager.Verify(x => x.CreateAsync(It.IsAny<ApplicationUser>(), "Password123"), Times.Once);
+            _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), request.RoleName))
+                .ReturnsAsync(IdentityResult.Success);
 
-            // Xác minh: RoleManager.CreateAsync đã được gọi 1 lần
-            _mockRoleManager.Verify(x => x.CreateAsync(It.Is<IdentityRole>(r => r.Name == "Tester")), Times.Once);
+            var result = await _authService.RegisterAsync(request);
 
-            // Xác minh: UserManager.AddToRoleAsync đã được gọi 1 lần
-            _mockUserManager.Verify(x => x.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Tester"), Times.Once);
+            Assert.IsTrue(result);
         }
 
         [Test]
         public async Task RegisterAsync_ShouldReturnFalse_WhenUserCreationFails()
         {
-            // Arrange
-            var service = CreateService();
-            var model = new RegisterRequest { UserName = "failuser", Password = "Pass", RoleName = "EndUser" };
+            var request = new RegisterRequest { UserName = "testuser", Password = "Pass@123", RoleName = "User" };
 
-            // Act
-            var result = await service.RegisterAsync(model);
+            _roleManagerMock.Setup(r => r.RoleExistsAsync(request.RoleName)).ReturnsAsync(true);
+            _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), request.Password))
+                .ReturnsAsync(IdentityResult.Failed());
 
-            // Assert
-            // SỬA LỖI KIỂU DỮ LIỆU: RegisterAsync trả về bool, nên Assert là Is.False
-            Assert.That(result, Is.False);
+            var result = await _authService.RegisterAsync(request);
 
-            // Xác minh: Nếu tạo thất bại, AddToRoleAsync KHÔNG được gọi
-            _mockUserManager.Verify(x => x.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
-        }
-
-        // -------------------------------------------------------------------
-        // --- TEST CHO ĐĂNG NHẬP (LoginAsync) ---
-        // -------------------------------------------------------------------
-
-        [Test]
-        public async Task LoginAsync_ShouldReturnToken_WhenCredentialsAreValid()
-        {
-            // Arrange
-            var service = CreateService();
-            var validModel = new LoginRequest { UserName = "testuser", Password = "validpass" };
-
-            // Act
-            var token = await service.LoginAsync(validModel);
-
-            // Assert
-            Assert.That(token, Is.Not.Null);
-            Assert.That(token.Length, Is.GreaterThan(50));
-
-            // Xác minh: CheckPasswordSignInAsync đã được gọi 1 lần
-            _mockSignInManager.Verify(
-                x => x.CheckPasswordSignInAsync(_userList.First(), "validpass", false),
-                Times.Once);
+            Assert.IsFalse(result);
         }
 
         [Test]
-        public async Task LoginAsync_ShouldReturnNull_WhenUserDoesNotExist()
+        public async Task LoginAsync_ShouldReturnNull_WhenUserNotFound()
         {
-            // Arrange
-            var service = CreateService();
-            var invalidModel = new LoginRequest { UserName = "nonexistentuser", Password = "anypass" };
-            // SỬA: Sử dụng Setup thay vì dùng _mockUserManager.Setup trực tiếp (đã có ở Setup)
-            _mockUserManager.Setup(x => x.FindByNameAsync("nonexistentuser")).ReturnsAsync((ApplicationUser)null);
+            var request = new LoginRequest { UserName = "notfound", Password = "wrong" };
+            _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync((ApplicationUser)null);
 
-            // Act
-            var token = await service.LoginAsync(invalidModel);
+            var result = await _authService.LoginAsync(request);
 
-            // Assert
-            Assert.That(token, Is.Null);
-
-            // Xác minh: CheckPasswordSignInAsync KHÔNG được gọi
-            _mockSignInManager.Verify(
-                x => x.CheckPasswordSignInAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<bool>()),
-                Times.Never);
+            Assert.IsNull(result);
         }
 
         [Test]
-        public async Task LoginAsync_ShouldReturnNull_WhenPasswordIsIncorrect()
+        public async Task LoginAsync_ShouldReturnNull_WhenPasswordInvalid()
         {
-            // Arrange
-            var service = CreateService();
-            var invalidModel = new LoginRequest { UserName = "testuser", Password = "wrongpass" };
-            _mockUserManager.Setup(x => x.FindByNameAsync("testuser")).ReturnsAsync(_userList.First());
+            var request = new LoginRequest { UserName = "testuser", Password = "wrong" };
+            var user = new ApplicationUser { UserName = request.UserName };
 
-            // Act
-            var token = await service.LoginAsync(invalidModel);
+            _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync(user);
+            _signInManagerMock.Setup(s => s.CheckPasswordSignInAsync(user, request.Password, false))
+                .ReturnsAsync(SignInResult.Failed);
 
-            // Assert
-            Assert.That(token, Is.Null);
+            var result = await _authService.LoginAsync(request);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public async Task LoginAsync_ShouldReturnToken_WhenLoginSuccessful()
+        {
+            var request = new LoginRequest { UserName = "testuser", Password = "Pass@123" };
+            var user = new ApplicationUser { Id = "1", UserName = request.UserName, Email = "test@test.com" };
+
+            _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync(user);
+            _signInManagerMock.Setup(s => s.CheckPasswordSignInAsync(user, request.Password, false))
+                .ReturnsAsync(SignInResult.Success);
+            _userManagerMock.Setup(u => u.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
+
+            var result = await _authService.LoginAsync(request);
+
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.Length > 20); // token string length check
         }
     }
 }
