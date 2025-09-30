@@ -1,77 +1,46 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Domain.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
+﻿using Application.Dtos;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
 namespace WebServer.Controllers
 {
+    [Route("api/[controller]")]
     [ApiController]
     [Route("api/[controlleression]")]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IAuthService _authService;
 
-        private readonly IConfiguration _configuration;
-
-        public AuthController(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration
-        )
+        public AuthController(IAuthService authService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _roleManager = roleManager;
-            _configuration = configuration;
+            _authService = authService;
         }
 
         [HttpPost]
         [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
-            if (!await _roleManager.RoleExistsAsync(model.RoleName))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(model.RoleName));
-            }
+            var result = await _authService.RegisterAsync(model);
 
-            var user = new ApplicationUser { UserName = model.UserName, Email = model.UserName };
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
+            if (result)
             {
                 await _userManager.AddToRoleAsync(user, model.RoleName);
                 return Ok(new { Message = "Registration successful" });
             }
 
-            return BadRequest(result.Errors);
+            return BadRequest("Register failed !");
         }
 
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Email);
-            
-            if (user == null)
+            var token = await _authService.LoginAsync(model);
+
+            if (token != null)
             {
-                return Unauthorized(new { Message = "Invalid credentials" });
-            }
-
-            var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
-
-            if (result.Succeeded)
-            {
-                //Get token
-                var token = GenerateJwtToken(user);
-
-                return Ok(new { Token = token });
+                return Ok(new { Token = token, Message = "Login successful" });
             }
             return Unauthorized(new { Message = "Invalid credentials" });
         }

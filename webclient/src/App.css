@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+:root {
+    --bg-color: #f0f2f5;
+    --form-bg: #ffffff;
+    --primary-color: #007bff;
+    --primary-hover: #0056b3;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --text-color: #333333;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    --border-radius: 12px;
+}
+
+body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; 
+    min-height: 100vh;
+    padding-top: 50px; 
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+}
+
+/* --- Thông báo trạng thái --- */
+.message-box {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 15px;
+    border: 1px solid #ffeeba;
+    border-radius: var(--border-radius);
+    margin-bottom: 25px;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+/* --- Form Container (Login/Register) --- */
+.form-container {
+    background-color: var(--form-bg);
+    padding: 40px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    width: 90%;
+    max-width: 450px;
+}
+
+h2 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-sizing: border-box; 
+}
+
+input:focus, select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* --- Buttons --- */
+button[type="submit"] {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+button[type="submit"]:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+.link-button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: underline;
+    padding: 0;
+    margin-left: 5px;
+}
+
+/* --- Protected Dashboard Page --- */
+.protected-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.description {
+    color: #555555;
+    font-size: 14px;
+    margin: 0;
+}
+
+.status-box {
+    background-color: #f7f9fc;
+    border-radius: 8px;
+    padding: 15px;
+    width: 100%;
+    margin-top: 20px;
+    border: 1px dashed #dddddd;
+}
+
+.status-text {
+    font-weight: 700;
+    margin-left: 10px;
+}
+
+.status-text.ok {
+    color: var(--success-color);
+}
+
+.status-text.error {
+    color: var(--error-color);
+}
+
+.check-button, .logout-button {
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.check-button {
+    background-color: var(--success-color);
+    color: white;
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+}
+
+.check-button:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+}
+
+.logout-button {
+    background-color: var(--error-color);
+    color: white;
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+}
+
+.logout-button:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
+}
