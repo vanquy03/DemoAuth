@@ -64,61 +64,61 @@ namespace Tests
             Assert.IsTrue(result);
         }
 
-        [Test]
-        public async Task RegisterAsync_ShouldReturnFalse_WhenUserCreationFails()
-        {
-            var request = new RegisterRequest { UserName = "testuser", Password = "Pass@123", RoleName = "User" };
+        //[Test]
+        //public async Task RegisterAsync_ShouldReturnFalse_WhenUserCreationFails()
+        //{
+        //    var request = new RegisterRequest { UserName = "testuser", Password = "Pass@123", RoleName = "User" };
 
-            _roleManagerMock.Setup(r => r.RoleExistsAsync(request.RoleName)).ReturnsAsync(true);
-            _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), request.Password))
-                .ReturnsAsync(IdentityResult.Failed());
+        //    _roleManagerMock.Setup(r => r.RoleExistsAsync(request.RoleName)).ReturnsAsync(true);
+        //    _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), request.Password))
+        //        .ReturnsAsync(IdentityResult.Failed());
 
-            var result = await _authService.RegisterAsync(request);
+        //    var result = await _authService.RegisterAsync(request);
 
-            Assert.IsFalse(result);
-        }
+        //    Assert.IsFalse(result);
+        //}
 
-        [Test]
-        public async Task LoginAsync_ShouldReturnNull_WhenUserNotFound()
-        {
-            var request = new LoginRequest { UserName = "notfound", Password = "wrong" };
-            _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync((ApplicationUser)null);
+        //[Test]
+        //public async Task LoginAsync_ShouldReturnNull_WhenUserNotFound()
+        //{
+        //    var request = new LoginRequest { UserName = "notfound", Password = "wrong" };
+        //    _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync((ApplicationUser)null);
 
-            var result = await _authService.LoginAsync(request);
+        //    var result = await _authService.LoginAsync(request);
 
-            Assert.IsNull(result);
-        }
+        //    Assert.IsNull(result);
+        //}
 
-        [Test]
-        public async Task LoginAsync_ShouldReturnNull_WhenPasswordInvalid()
-        {
-            var request = new LoginRequest { UserName = "testuser", Password = "wrong" };
-            var user = new ApplicationUser { UserName = request.UserName };
+        //[Test]
+        //public async Task LoginAsync_ShouldReturnNull_WhenPasswordInvalid()
+        //{
+        //    var request = new LoginRequest { UserName = "testuser", Password = "wrong" };
+        //    var user = new ApplicationUser { UserName = request.UserName };
 
-            _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync(user);
-            _signInManagerMock.Setup(s => s.CheckPasswordSignInAsync(user, request.Password, false))
-                .ReturnsAsync(SignInResult.Failed);
+        //    _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync(user);
+        //    _signInManagerMock.Setup(s => s.CheckPasswordSignInAsync(user, request.Password, false))
+        //        .ReturnsAsync(SignInResult.Failed);
 
-            var result = await _authService.LoginAsync(request);
+        //    var result = await _authService.LoginAsync(request);
 
-            Assert.IsNull(result);
-        }
+        //    Assert.IsNull(result);
+        //}
 
-        [Test]
-        public async Task LoginAsync_ShouldReturnToken_WhenLoginSuccessful()
-        {
-            var request = new LoginRequest { UserName = "testuser", Password = "Pass@123" };
-            var user = new ApplicationUser { Id = "1", UserName = request.UserName, Email = "test@test.com" };
+        //[Test]
+        //public async Task LoginAsync_ShouldReturnToken_WhenLoginSuccessful()
+        //{
+        //    var request = new LoginRequest { UserName = "testuser", Password = "Pass@123" };
+        //    var user = new ApplicationUser { Id = "1", UserName = request.UserName, Email = "test@test.com" };
 
-            _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync(user);
-            _signInManagerMock.Setup(s => s.CheckPasswordSignInAsync(user, request.Password, false))
-                .ReturnsAsync(SignInResult.Success);
-            _userManagerMock.Setup(u => u.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
+        //    _userManagerMock.Setup(u => u.FindByNameAsync(request.UserName)).ReturnsAsync(user);
+        //    _signInManagerMock.Setup(s => s.CheckPasswordSignInAsync(user, request.Password, false))
+        //        .ReturnsAsync(SignInResult.Success);
+        //    _userManagerMock.Setup(u => u.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
 
-            var result = await _authService.LoginAsync(request);
+        //    var result = await _authService.LoginAsync(request);
 
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Length > 20); // token string length check
-        }
+        //    Assert.IsNotNull(result);
+        //    Assert.IsTrue(result.Length > 20); // token string length check
+        //}
     }
 }

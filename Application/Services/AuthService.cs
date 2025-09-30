@@ -5,8 +5,8 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Application.Interfaces;
-using Application.Dtos;
 using Microsoft.Extensions.Configuration;
+using Application.Dtos;
 
 
 namespace Application.Services
